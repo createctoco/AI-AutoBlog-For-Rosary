@@ -8,3 +8,5 @@ hugo-*.zip
 *.exe
 /tmp/
 scripts/__pycache__/
+.venv/
+__pycache__/
