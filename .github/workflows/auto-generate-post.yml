@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: '0 1 * * *'    # Once daily: UTC 1:00 = Beijing 9:00
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'content/posts/**'
-      - 'assets/images/**'
 
 permissions:
   contents: write
