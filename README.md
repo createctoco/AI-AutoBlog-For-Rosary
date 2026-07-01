@@ -97,6 +97,8 @@ Edit `cron` in `.github/workflows/auto-generate-post.yml`:
 - `0 1 */2 * *` — Every two days at 09:00 Beijing time
 - `0 1 * * 1` — Every Monday at 09:00 Beijing time
 
+The production workflow runs only on its schedule or by manual dispatch. Merging code changes does not generate an extra article.
+
 ## Cost
 
 - **GitHub Pages**: Free

@@ -246,7 +246,9 @@ def call_api(prompt, api_key, model, api_url, temperature=0.85, attempts=3):
 # Build Prompts
 # ============================================
 def build_title_prompt(keyword):
-    return f"Generate a short, SEO-friendly blog post title about: {keyword}. Output ONLY the title, nothing else."
+    return f"""Write one clear, specific blog post title about: {keyword}
+Use plain English, avoid clickbait and exaggerated claims, and keep it under 80 characters.
+Output ONLY the title."""
 
 def format_business_facts(facts):
     claims = "\n".join(f"- {claim}" for claim in facts["approved_claims"])
@@ -297,7 +299,7 @@ def build_article_prompt(keyword, alibaba, facts):
     store = alibaba["store"]
     product_list = "\n".join([f"  - {p}" for p in products]) if products else ""
 
-    return f"""You are an experienced B2B content writer for a Catholic rosary beads factory.
+    return f"""Write a useful B2B article for buyers of Catholic religious goods.
 
 {format_business_facts(facts)}
 
@@ -306,46 +308,20 @@ FACTUAL SAFETY RULES:
 - Only state commercial facts included in VERIFIED BUSINESS FACTS.
 - When a specification is unknown, say that it varies by item and ask the buyer to confirm it with us.
 
-=== 花撸AI味根除指令（必须严格执行，违反任何一条即为废稿） ===
+EDITORIAL STANDARD:
+- Answer a real sourcing, product-selection, care, or devotional question implied by the keyword.
+- Use calm, professional English. Prefer complete sentences and natural transitions.
+- Give each section a distinct purpose. Include practical tradeoffs, checks, or decision criteria where relevant.
+- Remove generic introductions, filler, exaggerated adjectives, and repetitive summaries.
+- Do not fabricate personal experience, customer feedback, order trends, best sellers, or factory history.
+- Use "we" or "our" only for capabilities explicitly listed in VERIFIED BUSINESS FACTS.
+- Do not deliberately add mistakes, fragments, fake anecdotes, or forced slang.
+- Avoid canned phrases such as "in today's market", "it's important to note", "stands out as", "perfect choice", "game-changer", "comprehensive guide", and "in conclusion".
 
-【禁止的 AI 高频固定句式 — 出现即废稿】
-- "in today's market" / "in today's competitive market" / "in the modern market"
-- "it's worth mentioning" / "it is worth noting" / "it's important to note"
-- "key advantage" / "stands out as" / "game-changer" / "must-have"
-- "ideal choice" / "perfect choice" / "excellent choice" / "go-to choice"
-- "elevate your" / "elevating your" / "enhance your" / "enhancing your"
-- "in the world of" / "in the realm of" / "in the landscape of"
-- "comprehensive guide" / "ultimate guide" / "complete guide"
-- "transform your" / "make a statement"
-- "timeless addition" / "timeless piece"
-- "whether you're X or Y" / "whether you are X or Y"
-- "not only X but also Y" (not only...but also 整个句式禁用)
-- "looking to" + verb (如 "looking to elevate", "looking to enhance")
-- "In conclusion" / "To sum up" / "In summary" / "All in all" / "Ultimately"
-- "首先/其次/最后" 等模板过渡词
-
-【句式打散规则 — 必须遵守】
-- 长短句穿插：有的句子5-8词，有的15-20词，不要每句都12-15词
-- 拆分长复合句：一个超过25词的句子，拆成2个短句
-- 偶尔用口语化补充，比如：
-  "Many catholic believers pick this handmade rosary for baptism gifts."
-  "We've been getting a lot of orders from parish gift shops lately."
-  "Honestly, the 8mm size outsells everything else by a mile."
-- 允许不完整句、反问句、感叹句，打破 AI 文本熵特征
-- 段落长度随机：有的2-3句，有的只有1句
-
-【排比句禁令】
-- 禁止连续3个以上结构相同的句子
-- 禁止每段字数高度一致
-
-【写作人设】
-- 用「我们」而不是「该厂」「该工厂」
-- 写作风格参考真实工厂老板/销售写的博客：直接、带点个人观点、偶尔跑题
-- 可以适度使用反问句、感叹句
-
-=== 产品信息安全要求 ===
-
-只在文章主题相关时，自然使用上方 VERIFIED BUSINESS FACTS。不要为了凑数量加入无关事实，也不要扩写出未经验证的新参数。
+PRODUCT INFORMATION SAFETY:
+- Use VERIFIED BUSINESS FACTS only when relevant to the article topic.
+- Do not force unrelated rosary facts into articles about crosses, medals, or other products.
+- Do not expand an approved fact into a new specification or sales claim.
 
 === IMPORTANT CONSTRAINT ===
 This is a CATHOLIC/CHRISTIAN religious goods website.
@@ -357,15 +333,14 @@ Write a 900-1200 word English blog post targeting: {keyword}
 Requirements:
 - B2B English, targeting wholesale buyers, importers, church procurement
 - Use Markdown: ## for H2, ### for H3
-- Do NOT follow a fixed structure — let the content flow naturally
-- Vary paragraph length wildly: some 1-sentence paragraphs, some long ones
-- Include 3-5 headings total (not always the same number)
-- Naturally mention the Alibaba store ({store}) and 2-3 product links in the body:
+- Organize the article around the reader's decision rather than a fixed template
+- Use 3-5 descriptive Markdown headings (## or ###)
+- Naturally mention the Alibaba store ({store}) and 1-2 relevant product links in the body:
 {product_list}
-- End with a conclusion, but keep it natural (no "In conclusion" or similar AI clichés)
+- Finish with a practical next step; do not add a generic conclusion section
 - Do NOT include a title (H1) — we add it separately
 - Do NOT include meta description or JSON-LD (we add separately)
-- Tone: like a real factory owner writing — direct, personal, occasionally imperfect English is OK
+- Never claim that a human personally wrote, tested, bought, or used the product
 
 Output ONLY the article in Markdown format, no preamble.
 """
@@ -420,9 +395,42 @@ def validate_commercial_claims(text, facts):
         if re.search(pattern, text):
             raise ValueError(f"Unverified or unsafe {label} detected")
 
-def validate_article(article_md, facts):
+def validate_editorial_quality(article_md):
+    banned_phrases = (
+        "in today's market",
+        "in today's competitive market",
+        "it's important to note",
+        "it is important to note",
+        "stands out as",
+        "game-changer",
+        "perfect choice",
+        "excellent choice",
+        "comprehensive guide",
+        "ultimate guide",
+        "in conclusion",
+        "to sum up",
+        "in summary",
+        "all in all",
+    )
+    lowered = article_md.casefold()
+    found = [phrase for phrase in banned_phrases if phrase in lowered]
+    if found:
+        raise ValueError(f"Canned editorial phrase detected: {found[0]}")
+
+    unsupported_experience = (
+        r"(?i)we(?:'ve| have) been (?:seeing|getting|receiving)",
+        r"(?i)our customers (?:say|tell|love|prefer)",
+        r"(?i)(?:our|the) best[ -]?seller",
+        r"(?i)in our \d+ years",
+    )
+    for pattern in unsupported_experience:
+        if re.search(pattern, article_md):
+            raise ValueError("Unverified first-person experience or sales trend detected")
+
+def validate_article(article_md, facts, alibaba=None):
     article_md = article_md.strip()
     validate_commercial_claims(article_md, facts)
+    validate_editorial_quality(article_md)
     word_count = len(re.findall(r"\b[A-Za-z][A-Za-z'-]*\b", article_md))
     if not 850 <= word_count <= 1400:
         raise ValueError(f"Article word count {word_count} is outside 850-1400")
@@ -432,10 +440,41 @@ def validate_article(article_md, facts):
         raise ValueError("Article is wrapped in a Markdown code fence")
     if re.search(r"(?m)^#\s+", article_md):
         raise ValueError("Article unexpectedly contains an H1 title")
-    heading_count = len(re.findall(r"(?m)^##{2,3}\s+", article_md))
+    heading_count = len(re.findall(r"(?m)^#{2,3}\s+", article_md))
     if not 3 <= heading_count <= 7:
         raise ValueError(f"Article heading count {heading_count} is outside 3-7")
+    if alibaba:
+        store = alibaba.get("store")
+        products = alibaba.get("products", [])
+        if store and store not in article_md:
+            raise ValueError("Article is missing the approved Alibaba store link")
+        if products and not any(link in article_md for link in products):
+            raise ValueError("Article is missing an approved product link")
     return article_md
+
+def generate_validated_article(keyword, alibaba, facts, api_key, model, api_url, draft_attempts=3):
+    base_prompt = build_article_prompt(keyword, alibaba, facts)
+    validation_error = None
+
+    for attempt in range(1, draft_attempts + 1):
+        prompt = base_prompt
+        if validation_error:
+            prompt += f"""
+
+REWRITE REQUIRED:
+The previous draft was rejected by automated editorial review for this reason:
+{validation_error}
+Write a completely new draft that fixes the issue while following every rule above.
+"""
+        print(f"Generating article draft {attempt}/{draft_attempts}...", flush=True)
+        article_md = call_api(prompt, api_key, model, api_url, temperature=0.65)
+        try:
+            return validate_article(article_md, facts, alibaba)
+        except ValueError as exc:
+            validation_error = str(exc)
+            print(f"Article draft {attempt} rejected: {validation_error}", flush=True)
+
+    raise RuntimeError(f"No article draft passed validation after {draft_attempts} attempts: {validation_error}")
 
 def parse_and_validate_faq(raw, facts):
     raw = raw.strip()
@@ -558,8 +597,7 @@ def main():
     # 3. Generate article (Markdown format for TOC compatibility)
     print("Generating article...")
     alibaba = get_alibaba(config)
-    article_md = call_api(build_article_prompt(keyword, alibaba, facts), api_key, model, api_url, temperature=0.75)
-    article_md = validate_article(article_md, facts)
+    article_md = generate_validated_article(keyword, alibaba, facts, api_key, model, api_url)
 
     # 3b. Generate FAQ dynamically
     print("Generating FAQ...")
