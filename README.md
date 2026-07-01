@@ -92,10 +92,10 @@ Update the Hugo configuration under `config/_default/` and pin the corresponding
 
 ### Change Publish Frequency
 
-Edit `cron` in `config.yaml`:
-- `0 3 * * *` — Every day
-- `0 3 */2 * *` — Every 2 days
-- `0 3 * * 1` — Every Monday
+Edit `cron` in `.github/workflows/auto-generate-post.yml`:
+- `0 1 * * *` — Every day at 09:00 Beijing time
+- `0 1 */2 * *` — Every two days at 09:00 Beijing time
+- `0 1 * * 1` — Every Monday at 09:00 Beijing time
 
 ## Cost
 

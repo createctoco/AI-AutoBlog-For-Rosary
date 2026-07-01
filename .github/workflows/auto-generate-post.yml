@@ -2,8 +2,7 @@ name: Auto Generate Blog Post
 
 on:
   schedule:
-    - cron: '0 1 * * *'    # UTC 1:00 = Beijing 9:00
-    - cron: '0 9 * * *'    # UTC 9:00 = Beijing 17:00
+    - cron: '0 1 * * *'    # Once daily: UTC 1:00 = Beijing 9:00
   workflow_dispatch:
   push:
     branches: [main]
