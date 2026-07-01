@@ -1,5 +1,5 @@
-{{ if .Params.faqJson }}
+{{ if and .Params.faqVerified .Params.faqJson }}
 <script type="application/ld+json">
-{{ .Params.faqJson | safeHTML }}
+{{ .Params.faqJson | safeJS }}
 </script>
 {{ end }}

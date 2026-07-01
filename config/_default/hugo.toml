@@ -1,6 +1,7 @@
 baseURL = "https://rosarysupply.com/"
 locale = "en-us"
 title = "Catholic Religious Gifts Guide - RosarySupply"
+description = "Practical guides for Catholic rosary beads, religious gifts, church supplies, and wholesale sourcing."
 theme = "blowfish"
 enableGitInfo = false
 
@@ -19,4 +20,4 @@ priority   = 0.6
 filename   = "sitemap.xml"
 
 [markup.goldmark.renderer]
-unsafe = true
+unsafe = false

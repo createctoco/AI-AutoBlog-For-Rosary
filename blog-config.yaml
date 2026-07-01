@@ -32,6 +32,22 @@ alibaba_products:
   - "https://www.alibaba.com/product-detail/Catholic-Scapulars-Worship-Embroidery-Liturgical-Stole_1601321075842.html"
 
 # ============================================
+# VERIFIED BUSINESS FACTS
+# Only claims listed here may be used as fixed commercial facts by the AI.
+# Update these values when the real sales policy changes.
+# ============================================
+business_facts:
+  stock_moq: 12
+  oem_moq: 1200
+  approved_claims:
+    - "Relevant wooden rosaries use natural solid wood rather than plastic or resin imitation wood."
+    - "Relevant wooden rosary beads are hand polished."
+    - "Common rosary bead sizes are 6 mm, 8 mm, 10 mm, and 12 mm; availability varies by item."
+    - "Peruvian knots and flat knots are available for relevant cord rosaries; confirm the selected item before ordering."
+    - "A logo, church name, or parish name can be customized on eligible tags or packaging for OEM orders."
+    - "Catholic rosaries may be used for baptism, First Communion, Confirmation, weddings, memorials, daily prayer, and rosary groups."
+
+# ============================================
 # KEYWORDS (B2B Wholesale Long-tail Terms)
 # ============================================
 keywords:
@@ -45,8 +61,6 @@ keywords:
   - "how to make a catholic rosary"
   - "what is holy rosary"
   - "catholic baptism gift ideas"
-  - "bulk rosary for catholic store"
-  - "bulk rosary for catholic store"
   - "bulk rosary for catholic store"
   - "mini rosary"
   - "CTOCO rosary supplier"

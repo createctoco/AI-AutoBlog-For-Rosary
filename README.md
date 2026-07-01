@@ -1,21 +1,8 @@
-name: "AI-AutoBlog Hugo"
-description: "Auto-generate SEO blog posts with DeepSeek/OpenAI for Hugo + GitHub Pages. "
-url: "[https://github.com/createctoco/AI-AutoBlog-For-Rosary"
-author: "Ctoco
-https://rosarysupply.com/
-"
-
-keywords:
-  - AI blog
-  - Hugo
-  - auto blog
-  - DeepSeek
-  - catholic gifts
-  - religious wholesale
-
 # AI-AutoBlog Hugo
 
-Fully automated English SEO blog for catholic religious gifts / rosary beads / B2B wholesale traffic. Deploy once, never touch again.
+Automated English content pipeline for Catholic religious gifts, rosary beads, and B2B wholesale buyers. Generated content is validated before it can be committed or deployed.
+
+Website: https://rosarysupply.com/
 
 ## How It Works
 
@@ -37,18 +24,18 @@ Go to your forked repo → **Settings → Secrets and variables → Actions → 
 |------------|-------|
 | `OPENAI_API_KEY` | Your DeepSeek or OpenAI API key |
 | `AI_MODEL` | `deepseek-chat` (for DeepSeek) or `gpt-3.5-turbo` (for OpenAI) |
-| `AI_BASE_URL` | `https://api.deepseek.com/v1` (for DeepSeek) or leave empty for OpenAI |
+| `AI_API_URL` | `https://api.deepseek.com/v1` (for DeepSeek) |
+| `PEXELS_API_KEY` | Optional Pexels API key for featured images |
 
-### 3. Edit config.yaml
+### 3. Edit blog-config.yaml
 
-Open `config.yaml` in your repo and customize:
+Open `blog-config.yaml` in your repo and customize:
 
 - **alibaba_store_url**: Your Alibaba store URL
-- **alibaba_rosary_url**: Your rosary product URL
-- **alibaba_cross_url**: Your cross product URL
+- **alibaba_products**: Your approved product URLs
+- **business_facts**: Verified MOQ and product claims the AI is allowed to state
 - **keywords**: Add your long-tail keywords (50+ recommended)
-- **cron**: Schedule frequency (default: daily at 3am UTC)
-- **review_mode**: `false` for auto-publish, `true` for manual review
+- **cron**: Change the schedule in `.github/workflows/auto-generate-post.yml`
 
 ### 4. Enable GitHub Actions
 
@@ -79,7 +66,7 @@ Wait 2-5 minutes, then check your site at `https://yourusername.github.io/AI-Aut
 ```
 ├── .github/workflows/
 │   └── auto-generate-post.yml    # GitHub Actions workflow
-├── config.yaml                     # All settings (keywords, cron, prompt, links)
+├── blog-config.yaml                # Keywords, links, and verified business facts
 ├── layouts/
 │   ├── partials/
 │   │   └── alibaba-banner.html     # Sidebar Alibaba banner
@@ -87,27 +74,28 @@ Wait 2-5 minutes, then check your site at `https://yourusername.github.io/AI-Aut
 │       └── single.html            # Article page with footer link
 ├── content/posts/                  # Generated articles go here
 ├── scripts/
-│   └── generate-post.sh            # Post generation script
+│   ├── generate-post.py            # Post generation script
+│   └── validate-site.py            # Content safety validation
 ├── static/                         # Static assets
-└── theme.toml                      # PaperMod theme config (via submodule)
+└── requirements.txt               # Locked Python dependencies
 ```
 
 ## Customization
 
 ### Change Article Style
 
-Edit the `prompt` section in `.github/workflows/auto-generate-post.yml`
+Edit the prompt builders in `scripts/generate-post.py`.
 
 ### Change Theme
 
-Update `theme` in `config.yaml`. PaperMod alternatives: Stack, Mainroad, even.
+Update the Hugo configuration under `config/_default/` and pin the corresponding theme commit in the workflow.
 
 ### Change Publish Frequency
 
-Edit `cron` in `config.yaml`:
-- `0 3 * * *` — Every day
-- `0 3 */2 * *` — Every 2 days
-- `0 3 * * 1` — Every Monday
+Edit `cron` in `.github/workflows/auto-generate-post.yml`:
+- `0 1 * * *` — Every day at 09:00 Beijing time
+- `0 1 */2 * *` — Every two days at 09:00 Beijing time
+- `0 1 * * 1` — Every Monday at 09:00 Beijing time
 
 ## Cost
 

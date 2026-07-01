@@ -47,6 +47,18 @@
         {{ partial "series/series.html" . }}
         <div class="article-content max-w-prose mb-20">
           {{ .Content }}
+          {{ if and .Params.faqVerified .Params.faqJson }}
+            {{ $faq := transform.Unmarshal .Params.faqJson }}
+            {{ with index $faq "mainEntity" }}
+              <section class="mt-10" aria-labelledby="frequently-asked-questions">
+                <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+                {{ range . }}
+                  <h3>{{ .name }}</h3>
+                  <p>{{ .acceptedAnswer.text }}</p>
+                {{ end }}
+              </section>
+            {{ end }}
+          {{ end }}
           {{ $defaultReplyByEmail := site.Params.replyByEmail }}
           {{ $replyByEmail := default $defaultReplyByEmail .Params.replyByEmail }}
           {{ if $replyByEmail }}
