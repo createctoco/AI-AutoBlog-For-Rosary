@@ -147,13 +147,13 @@ def fetch_pexels_image(keyword, api_key, max_retries=3):
 
                 # 429 = rate limited, wait longer before retry
                 if response.status_code == 429:
-                    delay = 2 ** attempt * 5  # 10, 20, 40 seconds
-                    print(f"  Pexels rate limited (429), waiting {delay}s before retry...")
                     if attempt < max_retries:
+                        delay = 2 ** attempt * 5  # 10, 20 seconds
+                        print(f"  Pexels rate limited (429), waiting {delay}s before retry...")
                         time.sleep(delay)
                         continue
                     else:
-                        print(f"  Pexels rate limited after {max_retries} attempts, trying next search term...")
+                        print(f"  Pexels rate limited (429) after {max_retries} attempts, trying next search term...")
                         break
 
                 response.raise_for_status()

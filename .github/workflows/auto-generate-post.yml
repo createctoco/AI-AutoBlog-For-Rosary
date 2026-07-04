@@ -155,6 +155,7 @@ jobs:
           publish_branch: gh-pages
           cname: rosarysupply.com
           disable_nojekyll: false
+        continue-on-error: true
 
       - name: Verify deploy result
         if: always()
