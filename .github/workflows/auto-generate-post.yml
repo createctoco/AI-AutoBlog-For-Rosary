@@ -18,11 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
       BLOWFISH_COMMIT: e9699d8c5da9a64a105eb8401fd2cf79c6015c6f
     steps:
       - name: Checkout repo
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
 
@@ -60,7 +59,7 @@ jobs:
           git -C themes/blowfish remote add origin https://github.com/nunocoracao/blowfish.git
           git -C themes/blowfish fetch --depth 1 origin "$BLOWFISH_COMMIT"
           git -C themes/blowfish checkout --detach FETCH_HEAD
-          cp layouts/_default/sitemap.xml themes/blowfish/layouts/_default/sitemap.xml
+          cp layouts/_default/sitemap.xml themes/blowfish/layouts/_default/sitemap.xml || true
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@2752ce1d29631191ea3f27c23495fa06139a5b78 # v3
@@ -112,3 +111,15 @@ jobs:
           publish_dir: ./public
           publish_branch: gh-pages
           cname: rosarysupply.com
+          # 确保 .nojekyll 文件存在，防止 GitHub Pages 用 Jekyll 处理
+          disable_nojekyll: false
+
+      # ---- 部署后通知搜索引擎抓取 sitemap ----
+      - name: Ping search engines for sitemap
+        run: |
+          echo "Pinging Google..."
+          curl -s -o /dev/null -w "%{http_code}" "https://www.google.com/ping?sitemap=https://rosarysupply.com/sitemap.xml" || true
+          echo ""
+          echo "Pinging Bing..."
+          curl -s -o /dev/null -w "%{http_code}" "https://www.bing.com/ping?sitemap=https://rosarysupply.com/sitemap.xml" || true
+          echo ""
