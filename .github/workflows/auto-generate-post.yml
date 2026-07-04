@@ -53,13 +53,22 @@ jobs:
 
       - name: Fetch pinned Blowfish theme
         run: |
-          rm -rf themes/blowfish
-          mkdir -p themes/blowfish
-          git -C themes/blowfish init
-          git -C themes/blowfish remote add origin https://github.com/nunocoracao/blowfish.git
-          git -C themes/blowfish fetch --depth 1 origin "$BLOWFISH_COMMIT"
-          git -C themes/blowfish checkout --detach FETCH_HEAD
-          cp layouts/_default/sitemap.xml themes/blowfish/layouts/_default/sitemap.xml || true
+          for i in 1 2 3; do
+            rm -rf themes/blowfish
+            mkdir -p themes/blowfish
+            git -C themes/blowfish init
+            git -C themes/blowfish remote add origin https://github.com/nunocoracao/blowfish.git
+            if git -C themes/blowfish fetch --depth 1 origin "$BLOWFISH_COMMIT"; then
+              git -C themes/blowfish checkout --detach FETCH_HEAD
+              cp layouts/_default/sitemap.xml themes/blowfish/layouts/_default/sitemap.xml || true
+              echo "Theme fetched successfully on attempt $i"
+              exit 0
+            fi
+            echo "Theme fetch attempt $i failed, retrying in $((i * 5))s..."
+            sleep $((i * 5))
+          done
+          echo "::error::Theme fetch failed after 3 attempts" >&2
+          exit 1
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@2752ce1d29631191ea3f27c23495fa06139a5b78 # v3
@@ -104,22 +113,78 @@ jobs:
             sleep $((i * 5))
           done
 
-      - name: Deploy to GitHub Pages
+      # ---- Deploy with retry (3 attempts) ----
+      - name: Deploy to GitHub Pages (attempt 1)
+        id: deploy1
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
           publish_branch: gh-pages
           cname: rosarysupply.com
-          # 确保 .nojekyll 文件存在，防止 GitHub Pages 用 Jekyll 处理
+          disable_nojekyll: false
+        continue-on-error: true
+
+      - name: Wait before retry 1
+        if: steps.deploy1.outcome == 'failure'
+        run: echo "Deploy attempt 1 failed, waiting 10s before retry..." && sleep 10
+
+      - name: Deploy to GitHub Pages (attempt 2)
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          cname: rosarysupply.com
+          disable_nojekyll: false
+        continue-on-error: true
+
+      - name: Wait before retry 2
+        if: steps.deploy2.outcome == 'failure'
+        run: echo "Deploy attempt 2 failed, waiting 20s before final retry..." && sleep 20
+
+      - name: Deploy to GitHub Pages (attempt 3)
+        id: deploy3
+        if: steps.deploy2.outcome == 'failure'
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          cname: rosarysupply.com
           disable_nojekyll: false
 
-      # ---- 部署后通知搜索引擎抓取 sitemap ----
+      - name: Verify deploy result
+        if: always()
+        run: |
+          if [ "${{ steps.deploy1.outcome }}" = "failure" ] && \
+             [ "${{ steps.deploy2.outcome }}" = "failure" ] && \
+             [ "${{ steps.deploy3.outcome }}" = "failure" ]; then
+            echo "::error::All 3 deploy attempts failed"
+            exit 1
+          fi
+          echo "Deploy succeeded"
+
+      # ---- 部署后通知搜索引擎抓取 sitemap（带重试）----
       - name: Ping search engines for sitemap
         run: |
-          echo "Pinging Google..."
-          curl -s -o /dev/null -w "%{http_code}" "https://www.google.com/ping?sitemap=https://rosarysupply.com/sitemap.xml" || true
-          echo ""
-          echo "Pinging Bing..."
-          curl -s -o /dev/null -w "%{http_code}" "https://www.bing.com/ping?sitemap=https://rosarysupply.com/sitemap.xml" || true
-          echo ""
+          ping_url() {
+            local name="$1" url="$2"
+            for i in 1 2 3; do
+              local code
+              code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 "$url" 2>/dev/null || echo "000")
+              if [ "$code" = "200" ] || [ "$code" = "204" ]; then
+                echo "  $name: OK ($code)"
+                return 0
+              fi
+              echo "  $name: attempt $i failed (HTTP $code)"
+              [ "$i" -lt 3 ] && sleep $((i * 5))
+            done
+            echo "  $name: all attempts failed (non-fatal)"
+            return 0
+          }
+          echo "Pinging search engines..."
+          ping_url "Google" "https://www.google.com/ping?sitemap=https://rosarysupply.com/sitemap.xml"
+          ping_url "Bing" "https://www.bing.com/ping?sitemap=https://rosarysupply.com/sitemap.xml"

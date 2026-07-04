@@ -114,8 +114,12 @@ def is_japanese_image(photo):
     return False
 
 
-def fetch_pexels_image(keyword, api_key):
-    """Fetch a Pexels image URL (no local download, avoid repo bloat)"""
+def fetch_pexels_image(keyword, api_key, max_retries=3):
+    """Fetch a Pexels image URL (no local download, avoid repo bloat).
+
+    Retries up to max_retries times per search term with exponential backoff.
+    Handles 429 rate limiting and transient network errors separately.
+    """
     if not api_key:
         print("No Pexels API key provided, skipping Pexels")
         return None
@@ -130,32 +134,72 @@ def fetch_pexels_image(keyword, api_key):
     for search_term in search_terms:
         if not search_term.strip():
             continue
-        try:
-            print(f"Searching Pexels for: {search_term}")
-            response = requests.get(
-                "https://api.pexels.com/v1/search",
-                params={"query": search_term, "per_page": 15, "size": "large"},
-                headers={"Authorization": api_key},
-                timeout=15
-            )
-            response.raise_for_status()
-            data = response.json()
 
-            if data.get("photos"):
-                # Filter out Japanese-themed images
-                filtered_photos = [p for p in data["photos"] if not is_japanese_image(p)]
-                if not filtered_photos:
-                    print(f"  All {len(data['photos'])} photos filtered out (Japanese-themed), trying next search term...")
+        for attempt in range(1, max_retries + 1):
+            try:
+                print(f"Searching Pexels for: {search_term} (attempt {attempt}/{max_retries})")
+                response = requests.get(
+                    "https://api.pexels.com/v1/search",
+                    params={"query": search_term, "per_page": 15, "size": "large"},
+                    headers={"Authorization": api_key},
+                    timeout=15
+                )
+
+                # 429 = rate limited, wait longer before retry
+                if response.status_code == 429:
+                    delay = 2 ** attempt * 5  # 10, 20, 40 seconds
+                    print(f"  Pexels rate limited (429), waiting {delay}s before retry...")
+                    if attempt < max_retries:
+                        time.sleep(delay)
+                        continue
+                    else:
+                        print(f"  Pexels rate limited after {max_retries} attempts, trying next search term...")
+                        break
+
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get("photos"):
+                    # Filter out Japanese-themed images
+                    filtered_photos = [p for p in data["photos"] if not is_japanese_image(p)]
+                    if not filtered_photos:
+                        print(f"  All {len(data['photos'])} photos filtered out (Japanese-themed), trying next search term...")
+                        break  # Don't retry — the API worked, just no usable results
+                    photo = random.choice(filtered_photos)
+                    image_url = photo["src"]["large2x"]
+                    photographer = photo.get("photographer", "Pexels")
+                    print(f"Pexels image URL: {image_url} (by {photographer})")
+                    return image_url  # Return URL directly, no local download
+                else:
+                    print(f"  No photos found for '{search_term}', trying next search term...")
+                    break  # Don't retry — the API worked, just no results
+
+            except requests.exceptions.Timeout:
+                print(f"  Pexels timeout (attempt {attempt}/{max_retries})")
+                if attempt < max_retries:
+                    delay = 2 ** (attempt - 1)  # 1, 2, 4 seconds
+                    print(f"  Retrying in {delay}s...")
+                    time.sleep(delay)
                     continue
-                photo = random.choice(filtered_photos)
-                image_url = photo["src"]["large2x"]
-                photographer = photo.get("photographer", "Pexels")
-                print(f"Pexels image URL: {image_url} (by {photographer})")
-                return image_url  # Return URL directly, no local download
+                break
 
-        except Exception as e:
-            print(f"Warning: Pexels search failed for '{search_term}': {e}")
-            continue
+            except requests.exceptions.ConnectionError:
+                print(f"  Pexels connection error (attempt {attempt}/{max_retries})")
+                if attempt < max_retries:
+                    delay = 2 ** (attempt - 1)
+                    print(f"  Retrying in {delay}s...")
+                    time.sleep(delay)
+                    continue
+                break
+
+            except Exception as e:
+                print(f"  Pexels error (attempt {attempt}/{max_retries}): {e}")
+                if attempt < max_retries:
+                    delay = 2 ** (attempt - 1)
+                    print(f"  Retrying in {delay}s...")
+                    time.sleep(delay)
+                    continue
+                break
 
     print("Warning: Could not fetch any image from Pexels")
     return None
