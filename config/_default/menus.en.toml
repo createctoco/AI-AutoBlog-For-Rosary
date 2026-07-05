@@ -12,3 +12,8 @@
   name = "Catholic Gift"
   url = "https://mecrt.com/"
   weight = 30
+
+[[main]]
+  name = "Catholic Rosary"
+  url = "https://ctoco.com/"
+  weight = 40
