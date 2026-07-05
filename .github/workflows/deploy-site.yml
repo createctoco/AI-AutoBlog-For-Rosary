@@ -17,10 +17,13 @@ on:
       - 'hugo.yaml'
       - 'go.mod'
       - 'go.sum'
+      - '.github/workflows/deploy-site.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
   group: deploy-site-main
@@ -30,6 +33,9 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy1.outputs.page_url }}
     env:
       BLOWFISH_COMMIT: e9699d8c5da9a64a105eb8401fd2cf79c6015c6f
     steps:
@@ -66,58 +72,45 @@ jobs:
       - name: Build Hugo site
         run: hugo --minify --baseURL https://rosarysupply.com/
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
       - name: Deploy to GitHub Pages (attempt 1)
         id: deploy1
         continue-on-error: true
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
-          cname: rosarysupply.com
-          disable_nojekyll: false
+        uses: actions/deploy-pages@v5
+
+      - name: Sleep before retry 2
+        if: steps.deploy1.outcome == 'failure'
+        run: sleep 10
 
       - name: Deploy to GitHub Pages (attempt 2)
         id: deploy2
         if: steps.deploy1.outcome == 'failure'
         continue-on-error: true
-        run: sleep 10
-      - name: Deploy to GitHub Pages (attempt 2 - retry)
-        id: deploy2b
-        if: steps.deploy1.outcome == 'failure'
-        continue-on-error: true
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
-          cname: rosarysupply.com
-          disable_nojekyll: false
+        uses: actions/deploy-pages@v5
+
+      - name: Sleep before retry 3
+        if: steps.deploy2.outcome == 'failure'
+        run: sleep 20
 
       - name: Deploy to GitHub Pages (attempt 3)
         id: deploy3
-        if: steps.deploy2b.outcome == 'failure'
-        continue-on-error: true
-        run: sleep 20
-      - name: Deploy to GitHub Pages (attempt 3 - retry)
-        id: deploy3b
-        if: steps.deploy2b.outcome == 'failure'
-        continue-on-error: true
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
-          cname: rosarysupply.com
-          disable_nojekyll: false
+        if: steps.deploy2.outcome == 'failure'
+        uses: actions/deploy-pages@v5
 
       - name: Verify deployment
         if: always()
         run: |
-          if [ "${{ steps.deploy1.outcome }}" = "success" ] || [ "${{ steps.deploy2b.outcome }}" = "success" ] || [ "${{ steps.deploy3b.outcome }}" = "success" ]; then
-            echo "✅ Deployment succeeded"
+          if [ "${{ steps.deploy1.outcome }}" = "success" ] || [ "${{ steps.deploy2.outcome }}" = "success" ] || [ "${{ steps.deploy3.outcome }}" = "success" ]; then
+            echo "Deployment succeeded"
           else
-            echo "❌ All 3 deployment attempts failed"
+            echo "All 3 deployment attempts failed"
             exit 1
           fi
 
