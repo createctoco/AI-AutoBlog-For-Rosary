@@ -1,0 +1,138 @@
+name: Deploy Site
+
+# Trigger on push to main when site-related files change
+# (does NOT generate new articles — that's the cron workflow's job)
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'layouts/**'
+      - 'config/**'
+      - 'content/**'
+      - 'static/**'
+      - 'assets/**'
+      - 'i18n/**'
+      - 'hugo.toml'
+      - 'hugo.yaml'
+      - 'go.mod'
+      - 'go.sum'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-site-main
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BLOWFISH_COMMIT: e9699d8c5da9a64a105eb8401fd2cf79c6015c6f
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@75d2e6a421d506493f91c01030b870e57324feb1 # v3
+        with:
+          hugo-version: 'latest'
+          extended: true
+
+      - name: Fetch pinned Blowfish theme (with retry)
+        run: |
+          for i in 1 2 3; do
+            rm -rf themes/blowfish
+            mkdir -p themes/blowfish
+            git -C themes/blowfish init
+            git -C themes/blowfish remote add origin https://github.com/nunocoracao/blowfish.git
+            if git -C themes/blowfish fetch --depth 1 origin "$BLOWFISH_COMMIT"; then
+              git -C themes/blowfish checkout --detach FETCH_HEAD
+              cp layouts/_default/sitemap.xml themes/blowfish/layouts/_default/sitemap.xml || true
+              echo "Theme fetched successfully on attempt $i"
+              exit 0
+            fi
+            echo "Attempt $i failed, sleeping..."
+            sleep $((i * 5))
+          done
+          echo "Failed to fetch theme after 3 attempts"
+          exit 1
+
+      - name: Build Hugo site
+        run: hugo --minify --baseURL https://rosarysupply.com/
+
+      - name: Deploy to GitHub Pages (attempt 1)
+        id: deploy1
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          cname: rosarysupply.com
+          disable_nojekyll: false
+
+      - name: Deploy to GitHub Pages (attempt 2)
+        id: deploy2
+        if: steps.deploy1.outcome == 'failure'
+        continue-on-error: true
+        run: sleep 10
+      - name: Deploy to GitHub Pages (attempt 2 - retry)
+        id: deploy2b
+        if: steps.deploy1.outcome == 'failure'
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          cname: rosarysupply.com
+          disable_nojekyll: false
+
+      - name: Deploy to GitHub Pages (attempt 3)
+        id: deploy3
+        if: steps.deploy2b.outcome == 'failure'
+        continue-on-error: true
+        run: sleep 20
+      - name: Deploy to GitHub Pages (attempt 3 - retry)
+        id: deploy3b
+        if: steps.deploy2b.outcome == 'failure'
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: gh-pages
+          cname: rosarysupply.com
+          disable_nojekyll: false
+
+      - name: Verify deployment
+        if: always()
+        run: |
+          if [ "${{ steps.deploy1.outcome }}" = "success" ] || [ "${{ steps.deploy2b.outcome }}" = "success" ] || [ "${{ steps.deploy3b.outcome }}" = "success" ]; then
+            echo "✅ Deployment succeeded"
+          else
+            echo "❌ All 3 deployment attempts failed"
+            exit 1
+          fi
+
+      - name: Ping search engines
+        run: |
+          for engine in google bing; do
+            for i in 1 2 3; do
+              if [ "$engine" = "google" ]; then
+                url="https://www.google.com/ping?sitemap=https://rosarysupply.com/sitemap.xml"
+              else
+                url="https://www.bing.com/ping?sitemap=https://rosarysupply.com/sitemap.xml"
+              fi
+              code=$(curl -s -o /dev/null -w "%{http_code}" "$url" || echo "000")
+              echo "$engine ping attempt $i: HTTP $code"
+              if [ "$code" = "200" ]; then break; fi
+              sleep $((i * 5))
+            done
+          done
