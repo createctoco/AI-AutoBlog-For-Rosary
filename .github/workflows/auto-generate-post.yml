@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 # Never let two generators race to publish different versions of main.
 concurrency:
@@ -17,6 +19,9 @@ jobs:
   generate-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy1.outputs.page_url }}
     env:
       BLOWFISH_COMMIT: e9699d8c5da9a64a105eb8401fd2cf79c6015c6f
     steps:
@@ -114,15 +119,17 @@ jobs:
           done
 
       # ---- Deploy with retry (3 attempts) ----
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
+
       - name: Deploy to GitHub Pages (attempt 1)
         id: deploy1
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
-          cname: rosarysupply.com
-          disable_nojekyll: false
+        uses: actions/deploy-pages@v5
         continue-on-error: true
 
       - name: Wait before retry 1
@@ -132,13 +139,7 @@ jobs:
       - name: Deploy to GitHub Pages (attempt 2)
         id: deploy2
         if: steps.deploy1.outcome == 'failure'
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
-          cname: rosarysupply.com
-          disable_nojekyll: false
+        uses: actions/deploy-pages@v5
         continue-on-error: true
 
       - name: Wait before retry 2
@@ -148,13 +149,7 @@ jobs:
       - name: Deploy to GitHub Pages (attempt 3)
         id: deploy3
         if: steps.deploy2.outcome == 'failure'
-        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          publish_branch: gh-pages
-          cname: rosarysupply.com
-          disable_nojekyll: false
+        uses: actions/deploy-pages@v5
         continue-on-error: true
 
       - name: Verify deploy result
