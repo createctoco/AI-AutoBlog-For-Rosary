@@ -1,3 +1,5 @@
+# Main navigation menu
+
 [[main]]
   name = "Home"
   pageRef = "/"
