@@ -1,6 +1,16 @@
+{{/* Canonical link — use front matter "canonical" if set, otherwise permalink */}}
+<link rel="canonical" href="{{ with .Params.canonical }}{{ . }}{{ else }}{{ .Permalink }}{{ end }}">
+
 {{ if and .Params.faqVerified .Params.faqJson }}
 <script type="application/ld+json">
 {{ .Params.faqJson | safeJS }}
+</script>
+{{ end }}
+
+{{/* Article schema for AI crawlers / Google rich results */}}
+{{ if .Params.articleSchema }}
+<script type="application/ld+json">
+{{ .Params.articleSchema | safeJS }}
 </script>
 {{ end }}
 
