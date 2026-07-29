@@ -11,6 +11,11 @@
   weight = 20
 
 [[main]]
+  name = "Product Recommendations"
+  pageRef = "/categories/product-recommendations/"
+  weight = 25
+
+[[main]]
   name = "Catholic Gifts"
   url = "https://mecrt.com/"
   weight = 30
