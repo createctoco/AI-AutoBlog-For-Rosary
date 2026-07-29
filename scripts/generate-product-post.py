@@ -620,6 +620,14 @@ def build_markdown(title, product, article_md, faq_json):
     # Use product title as keyword for uniqueness tracking in validate-site.py
     safe_keyword = json.dumps(product["title"][:80], ensure_ascii=False)
 
+    # Pick category by product type so taxonomy pages stay meaningful,
+    # and don't duplicate the "wholesale / product-recommendation / B2B" tag cluster.
+    title_lower = title.lower()
+    if "rosary" in title_lower:
+        category_value = "Rosary"
+    else:
+        category_value = "Catholic Gifts"
+
     front_matter_lines = [
         "---",
         f"title: {safe_title}",
@@ -627,8 +635,8 @@ def build_markdown(title, product, article_md, faq_json):
         "draft: false",
         f"keyword: {safe_keyword}",
         f"product_url: {safe_product_url}",
-        'tags: ["wholesale", "product-recommendation", "B2B"]',
-        'categories: ["Product Recommendations"]',
+        'tags: ["wholesale", "B2B"]',
+        f'categories: ["{category_value}"]',
     ]
     if product.get("main_image"):
         front_matter_lines.append(f'featureimage: {json.dumps(product["main_image"])}')

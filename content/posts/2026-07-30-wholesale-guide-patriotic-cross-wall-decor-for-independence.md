@@ -4,8 +4,8 @@ date: 2026-07-30T02:59:50+08:00
 draft: false
 keyword: "Cross-border New Arrival Independence Day US Flag Cross American Patriotic Home "
 product_url: "https://mecrt.com/product/cross-border-new-arrival-independence-day-us-flag-cross-american-patriotic-home-hanging-ornament-wreath-wall-hanging-decoration"
-tags: ["wholesale", "product-recommendation", "B2B"]
-categories: ["Product Recommendations"]
+tags: ["wholesale", "B2B"]
+categories: ["Catholic Gifts"]
 featureimage: "https://mecrt.com/wp-content/uploads/2026/06/H422b2f4842e9496e97b88a537c2d8395m.webp"
 thumbnail: "https://mecrt.com/wp-content/uploads/2026/06/H422b2f4842e9496e97b88a537c2d8395m.webp"
 faqVerified: true

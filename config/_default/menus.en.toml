@@ -11,8 +11,8 @@
   weight = 20
 
 [[main]]
-  name = "Product Recommendations"
-  pageRef = "/categories/product-recommendations/"
+  name = "Product"
+  pageRef = "/categories/catholic-gifts/"
   weight = 25
 
 [[main]]
