@@ -331,6 +331,80 @@ def scrape_product(product_url):
 # ============================================
 # Build DeepSeek prompts
 # ============================================
+
+# Multiple article structures + opening styles to randomize output
+# so every post does not look identical (avoid AI-pattern detection).
+ARTICLE_STRUCTURES = [
+    {
+        "name": "standard",
+        "headings": [
+            "Product Overview",
+            "Material and Design Highlights",
+            "Customization for Bulk Buyers",
+            "What to Verify Before Ordering",
+            "Next Steps",
+        ],
+    },
+    {
+        "name": "buyer-lens",
+        "headings": [
+            "What This Product Is",
+            "Design and Craft Details",
+            "Sourcing Options: Stock vs. Custom",
+            "Questions to Ask Before Ordering",
+            "How to Move Forward",
+        ],
+    },
+    {
+        "name": "checklist",
+        "headings": [
+            "The Product in Brief",
+            "Specs and Build Quality",
+            "Ordering: MOQ and Customization",
+            "Checklist Before You Commit",
+            "Where to Go from Here",
+        ],
+    },
+    {
+        "name": "compact",
+        "headings": [
+            "Overview",
+            "Materials and Craftsmanship",
+            "Bulk Ordering Details",
+            "Closing Notes",
+        ],
+    },
+    {
+        "name": "scenario",
+        "headings": [
+            "Product Snapshot",
+            "Who This Fits: Buyers and Use Cases",
+            "Customization and OEM Options",
+            "What to Confirm with the Supplier",
+            "Next Step",
+        ],
+    },
+    {
+        "name": "trade-focus",
+        "headings": [
+            "At a Glance",
+            "Construction and Materials",
+            "Wholesale and OEM Terms",
+            "Pre-Order Verification",
+            "Wrapping Up",
+        ],
+    },
+]
+
+OPENING_STYLES = [
+    "Open by stating what the product is and which buyers it serves",
+    "Open with the buyer's need this product addresses, then introduce the product",
+    "Open with a typical use case or setting where this product fits, then describe it",
+    "Open by positioning the product within its category, then detail it",
+    "Open with a sourcing angle \u2014 why a wholesale buyer would consider this item",
+]
+
+
 def build_title_prompt(product):
     return f"""Write one clear, professional blog post title for a B2B product recommendation article about this product:
 
@@ -355,6 +429,12 @@ def build_article_prompt(product):
     if product.get("main_image"):
         image_md = f"\n![{product['title']}]({product['main_image']})\n"
 
+    # Randomize structure & opening so posts do not all look identical
+    structure = random.choice(ARTICLE_STRUCTURES)
+    opening = random.choice(OPENING_STYLES)
+    headings_block = "\n".join(f"  ## {h}" for h in structure["headings"])
+    heading_count = len(structure["headings"])
+
     return f"""You are a B2B trade copywriter for a Catholic religious goods manufacturer (Mecrt / Yiwu International Trade Co., Ltd).
 Write a product recommendation article for wholesale buyers, importers, and church procurement officers.
 
@@ -373,18 +453,15 @@ ARTICLE REQUIREMENTS:
 - 900-1300 words, English, B2B tone
 - Category: Product Recommendations
 - Use Markdown: ## for H2, ### for H3
-- Use EXACTLY 4 to 6 headings total (## and ### combined). NEVER use more than 6 headings.
-- Suggested structure (use only these, do not add more):
-  ## Product Overview
-  ## Material and Design Highlights
-  ## Customization for Bulk Buyers
-  ## What to Verify Before Ordering
-  ## Next Steps
+- Use EXACTLY {heading_count} headings total (## and ### combined). NEVER use more than {heading_count + 1} headings.
+- Use this structure (you may tweak a heading's wording slightly to fit the product, but keep this section flow and count):
+{headings_block}
 - Do NOT include an H1 title — we add it separately
 - Do NOT include front matter, meta description, or JSON-LD
+- Do NOT write a final "Request a Wholesale Quote" or CTA section — our system appends one automatically
 
 CONTENT STRUCTURE:
-- Open with what the product is and who it serves (churches, retailers, distributors)
+- {opening}.
 - Explain key material / craftsmanship / design points from the source material
 - Discuss customization and OEM/ODM possibilities for bulk buyers
 - Cover what a buyer should verify before placing a bulk order (specs, samples, MOQ)
@@ -403,14 +480,16 @@ COMMERCIAL FACTS SAFETY:
 - If a detail is not in the source, say "contact us to confirm" or "varies by item"
 - In-stock MOQ: 12 pieces; OEM/custom MOQ: 1200 pieces (you may mention these)
 
-LINKS:
-- Include the product page link ({product['url']}) once where relevant
-- Links should feel contextual, not forced
+LINKS (important):
+- Do NOT include the product page URL as a clickable hyperlink anywhere in the article body.
+- You MAY mention "mecrt.com" as a brand name in plain text (e.g. "reach Mecrt through mecrt.com"), but never render the full product URL and never use Markdown link syntax [..](..) in the body.
+- The only clickable link to the product page is appended automatically in a final CTA section — do not write that section yourself.
 - Do NOT mention Alibaba, alibaba.com, or any Alibaba store — this article directs buyers to mecrt.com only
 
 EDITORIAL RULES:
 - Professional, calm, informative English — like a trade magazine article
 - Avoid canned phrases: "in today's market", "stands out as", "game-changer", "perfect choice", "comprehensive guide", "in conclusion"
+- Vary sentence and paragraph length naturally — do not write uniform blocks of the same length
 - Do not fabricate customer reviews, sales data, or personal experience
 - Use "we" or "our" sparingly, only for capabilities mentioned in the source material
 - Include the product image at the top of the article body using this exact markdown:
