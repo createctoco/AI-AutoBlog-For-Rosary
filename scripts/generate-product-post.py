@@ -125,7 +125,7 @@ def fetch_page(url, timeout=20):
     return resp.text
 
 
-def scrape_product_links(max_pages=10):
+def scrape_product_links(max_pages=50):
     """Scrape all product URLs from the shop page (paginated)."""
     all_links = []
     seen = set()
@@ -163,8 +163,8 @@ def scrape_product_links(max_pages=10):
         all_links.extend(links_on_page)
         print(f"  Found {len(links_on_page)} products (total: {len(all_links)})")
 
-        # Be polite
-        time.sleep(1)
+        # Be polite but fast enough for 40+ pages
+        time.sleep(0.5)
 
     return all_links
 
@@ -588,7 +588,7 @@ def main():
 
     # 1. Scrape product list from mecrt.com
     print("Step 1: Scraping product list from mecrt.com...")
-    all_products = scrape_product_links(max_pages=10)
+    all_products = scrape_product_links(max_pages=50)
     if not all_products:
         print("ERROR: No products found on mecrt.com shop page")
         sys.exit(1)
