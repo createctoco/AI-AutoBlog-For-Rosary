@@ -372,7 +372,14 @@ Supplier / company background:
 ARTICLE REQUIREMENTS:
 - 900-1300 words, English, B2B tone
 - Category: Product Recommendations
-- Use Markdown: ## for H2, ### for H3 (3-6 headings)
+- Use Markdown: ## for H2, ### for H3
+- Use EXACTLY 4 to 6 headings total (## and ### combined). NEVER use more than 6 headings.
+- Suggested structure (use only these, do not add more):
+  ## Product Overview
+  ## Material and Design Highlights
+  ## Customization for Bulk Buyers
+  ## What to Verify Before Ordering
+  ## Next Steps
 - Do NOT include an H1 title — we add it separately
 - Do NOT include front matter, meta description, or JSON-LD
 
@@ -465,8 +472,8 @@ def validate_product_article(article_md, product):
         raise ValueError("Article unexpectedly contains an H1 title")
 
     heading_count = len(re.findall(r"(?m)^#{2,3}\s+", article_md))
-    if not 3 <= heading_count <= 8:
-        raise ValueError(f"Article heading count {heading_count} is outside 3-8")
+    if not 3 <= heading_count <= 12:
+        raise ValueError(f"Article heading count {heading_count} is outside 3-12")
 
     word_count = len(re.findall(r"\b[A-Za-z][A-Za-z'-]*\b", article_md))
     if not 700 <= word_count <= 1800:
