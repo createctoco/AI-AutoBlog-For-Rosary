@@ -61,6 +61,7 @@ def main():
     errors = []
     titles = {}
     keywords = {}
+    product_urls = {}
     count = 0
 
     try:
@@ -105,6 +106,16 @@ def main():
                 raise ValueError(f"{path.name}: duplicate keyword also used by {keywords[keyword]}")
             titles[title] = path.name
             keywords[keyword] = path.name
+
+            # Product recommendation posts carry a product_url field
+            product_url = front.get("product_url")
+            if product_url:
+                product_url = str(product_url).strip()
+                if not product_url.startswith("https://"):
+                    raise ValueError(f"{path.name}: product_url must use HTTPS")
+                if product_url in product_urls:
+                    raise ValueError(f"{path.name}: duplicate product_url also used by {product_urls[product_url]}")
+                product_urls[product_url] = path.name
 
             image = front.get("featureimage")
             if image and not str(image).startswith("https://"):

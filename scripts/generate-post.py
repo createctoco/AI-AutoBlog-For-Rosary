@@ -273,9 +273,13 @@ def call_api(prompt, api_key, model, api_url, temperature=0.85, attempts=3):
                 timeout=(15, 120)
             )
             resp.raise_for_status()
-            content = resp.json()["choices"][0]["message"]["content"]
+            resp_data = resp.json()
+            choice = resp_data["choices"][0]
+            content = choice["message"]["content"]
             if not isinstance(content, str) or not content.strip():
                 raise ValueError("API returned empty content")
+            if choice.get("finish_reason") == "length":
+                raise ValueError("Response truncated (max_tokens reached)")
             return content
         except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
             last_error = exc
@@ -616,7 +620,7 @@ def main():
     facts = get_business_facts(config)
 
     api_key = os.environ.get("OPENAI_API_KEY", "")
-    model = os.environ.get("AI_MODEL") or "deepseek-chat"
+    model = os.environ.get("AI_MODEL") or "deepseek-v4-flash"
     api_url = os.environ.get("AI_API_URL") or "https://api.deepseek.com/v1"
     pexels_api_key = os.environ.get("PEXELS_API_KEY", "")
 

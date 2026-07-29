@@ -1,8 +1,8 @@
-name: Auto Generate Blog Post
+name: Daily Product Recommendation
 
 on:
   schedule:
-    - cron: '0 3 * * 1'    # Weekly: UTC 3:00 Monday = Beijing 11:00 Monday (staggered from product workflow)
+    - cron: '0 1 * * *'    # Once daily: UTC 1:00 = Beijing 9:00
   workflow_dispatch:
 
 permissions:
@@ -10,9 +10,8 @@ permissions:
   pages: write
   id-token: write
 
-# Never let two generators race to publish different versions of main.
 concurrency:
-  group: auto-generate-post-main
+  group: daily-product-recommendation-main
   cancel-in-progress: false
 
 jobs:
@@ -45,13 +44,14 @@ jobs:
       - name: Validate existing content
         run: python scripts/validate-site.py
 
-      - name: Generate blog post
+      - name: Generate product recommendation post
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           AI_MODEL: ${{ secrets.AI_MODEL }}
           AI_API_URL: ${{ secrets.AI_API_URL }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-        run: python scripts/generate-post.py
+          ALIBABA_STORE_URL: ${{ secrets.ALIBABA_STORE_URL }}
+        run: python scripts/generate-product-post.py
 
       - name: Validate generated content
         run: python scripts/validate-site.py
@@ -81,7 +81,6 @@ jobs:
           hugo-version: '0.161.0'
           extended: true
 
-      # Build before commit so malformed generated content never enters main.
       - name: Build Hugo site
         run: hugo --minify
 
@@ -98,7 +97,7 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Auto generate validated blog post [skip ci]"
+          git commit -m "Auto generate product recommendation post [skip ci]"
           for i in 1 2 3 4 5; do
             if git push origin HEAD:main; then
               echo "pushed=true" >> "$GITHUB_OUTPUT"
@@ -163,7 +162,7 @@ jobs:
           fi
           echo "Deploy succeeded"
 
-      # ---- 部署后通知搜索引擎抓取 sitemap（带重试）----
+      # ---- Notify search engines ----
       - name: Ping search engines for sitemap
         run: |
           ping_url() {
