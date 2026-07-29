@@ -5,7 +5,7 @@ draft: false
 keyword: "Mecrt Wooden Beaded Necklaces Religious Catholic Wood Bead Rosary Crucifix Cross"
 product_url: "https://mecrt.com/product/mecrt-wooden-beaded-necklaces-religious-catholic-wood-bead-rosary-crucifix-cross-pendant-necklace-for-men-easter-baptism-gift"
 tags: ["wholesale", "B2B"]
-categories: ["Rosary"]
+categories: ["Catholic Gifts", "Rosary"]
 featureimage: "https://mecrt.com/wp-content/uploads/2026/06/H2e4c000b1b21410f9bcd9277635a5aa94.webp"
 thumbnail: "https://mecrt.com/wp-content/uploads/2026/06/H2e4c000b1b21410f9bcd9277635a5aa94.webp"
 faqVerified: true
