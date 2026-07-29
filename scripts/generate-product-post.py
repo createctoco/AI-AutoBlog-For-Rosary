@@ -345,7 +345,7 @@ The title should:
 Output ONLY the title."""
 
 
-def build_article_prompt(product, alibaba_store):
+def build_article_prompt(product):
     # Truncate source material to avoid token overflow
     intro = (product.get("product_intro") or "")[:2000]
     supplier = (product.get("supplier_info") or "")[:1500]
@@ -397,9 +397,9 @@ COMMERCIAL FACTS SAFETY:
 - In-stock MOQ: 12 pieces; OEM/custom MOQ: 1200 pieces (you may mention these)
 
 LINKS:
-- Naturally mention the Alibaba store ({alibaba_store}) once in the body
 - Include the product page link ({product['url']}) once where relevant
 - Links should feel contextual, not forced
+- Do NOT mention Alibaba, alibaba.com, or any Alibaba store — this article directs buyers to mecrt.com only
 
 EDITORIAL RULES:
 - Professional, calm, informative English — like a trade magazine article
@@ -516,7 +516,7 @@ def parse_and_validate_faq(raw):
 # ============================================
 # Build markdown file
 # ============================================
-def build_markdown(title, product, article_md, alibaba_store, faq_json):
+def build_markdown(title, product, article_md, faq_json):
     tz_bj = timezone(timedelta(hours=8))
     now = datetime.now(tz_bj)
     date_str = now.strftime("%Y-%m-%d")
@@ -558,9 +558,8 @@ def build_markdown(title, product, article_md, alibaba_store, faq_json):
     # CTA block — inquiry focused, mecrt.com product link at the very end
     cta = "## Request a Wholesale Quote\n\n"
     cta += f"Interested in sourcing **{title}** for your store, parish, or distribution network? "
-    cta += f"Visit our **[Alibaba Store]({alibaba_store})** to send an inquiry. "
-    cta += "Our team responds within 24 hours with pricing, MOQ, and customization options.\n\n"
-    cta += f"**[View this product on mecrt.com]({product['url']})**\n"
+    cta += f"**[View this product on mecrt.com]({product['url']})** to review specifications and send an inquiry. "
+    cta += "Our team responds within 24 hours with pricing, MOQ, and customization options.\n"
 
     content = f"""{front_matter}
 
@@ -580,7 +579,6 @@ def main():
     api_key = os.environ.get("OPENAI_API_KEY", "")
     model = os.environ.get("AI_MODEL") or "deepseek-v4-flash"
     api_url = os.environ.get("AI_API_URL") or "https://api.deepseek.com/v1"
-    alibaba_store = os.environ.get("ALIBABA_STORE_URL") or "https://mecrt.en.alibaba.com/"
 
     if not api_key:
         print("ERROR: OPENAI_API_KEY environment variable not set")
@@ -613,7 +611,7 @@ def main():
 
     # 5. Generate article (with retry on validation failure)
     print("\nStep 5: Generating article...")
-    base_prompt = build_article_prompt(product, alibaba_store)
+    base_prompt = build_article_prompt(product)
     article_md = None
     for attempt in range(1, 4):
         prompt = base_prompt
@@ -646,7 +644,7 @@ def main():
 
     # 7. Save file
     os.makedirs(POSTS_DIR, exist_ok=True)
-    filepath, content = build_markdown(title, product, article_md, alibaba_store, faq_json)
+    filepath, content = build_markdown(title, product, article_md, faq_json)
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"\nSaved: {filepath}")
