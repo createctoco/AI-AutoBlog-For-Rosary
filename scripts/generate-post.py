@@ -252,40 +252,61 @@ def get_featured_image(keyword, pexels_api_key):
 # ============================================
 # Call DeepSeek API
 # ============================================
-def call_api(prompt, api_key, model, api_url, temperature=0.85, attempts=3):
+def call_api(prompt, api_key, model, api_url, temperature=0.85, attempts=5):
+    """Call DeepSeek chat completions API with robust retry logic.
+
+    DeepSeek V4 models intermittently return empty content (HTTP 200 with
+    content="") — a known issue acknowledged in their docs. We counter with
+    more retries, longer backoff, and accepting truncated-but-usable content.
+    """
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
     }
+    messages = [
+        {"role": "system", "content": "You are a professional SEO content writer. Follow the user's instructions precisely and output only the requested content in Markdown."},
+        {"role": "user", "content": prompt},
+    ]
     payload = {
         "model": model,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages,
         "temperature": temperature,
-        "max_tokens": 2500
+        "max_tokens": 8192
     }
+    retry_delays = [5, 10, 20, 40]
     last_error = None
     for attempt in range(1, attempts + 1):
         try:
+            if attempt > 1:
+                payload["messages"] = [
+                    {"role": "system", "content": "You are a professional SEO content writer. Follow the user's instructions precisely and output only the requested content in Markdown."},
+                    {"role": "user", "content": prompt + f"\n\n(Attempt {attempt} — please ensure a complete response.)"},
+                ]
             resp = requests.post(
                 f"{api_url.rstrip('/')}/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=(15, 120)
+                timeout=(15, 180)
             )
             resp.raise_for_status()
             resp_data = resp.json()
             choice = resp_data["choices"][0]
             content = choice["message"]["content"]
+            finish_reason = choice.get("finish_reason", "unknown")
             if not isinstance(content, str) or not content.strip():
-                raise ValueError("API returned empty content")
-            if choice.get("finish_reason") == "length":
-                raise ValueError("Response truncated (max_tokens reached)")
+                raise ValueError(f"API returned empty content (finish_reason={finish_reason})")
+            if finish_reason == "length":
+                word_count = len(content.split())
+                if word_count >= 800:
+                    print(f"  Warning: response truncated at {word_count} words, but content is substantial — accepting.")
+                    return content
+                raise ValueError(f"Response truncated (max_tokens reached, {word_count} words)")
             return content
         except (requests.RequestException, KeyError, TypeError, ValueError) as exc:
             last_error = exc
             if attempt == attempts:
                 break
-            delay = 2 ** (attempt - 1)
+            delay = retry_delays[min(attempt - 1, len(retry_delays) - 1)]
             print(f"API attempt {attempt}/{attempts} failed: {exc}; retrying in {delay}s")
             time.sleep(delay)
     raise RuntimeError(f"AI API failed after {attempts} attempts: {last_error}")

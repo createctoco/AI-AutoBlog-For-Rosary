@@ -41,25 +41,48 @@ USER_AGENT = (
 # ============================================
 # DeepSeek API (shared with generate-post.py, improved)
 # ============================================
-def call_api(prompt, api_key, model, api_url, temperature=0.85, attempts=3):
+def call_api(prompt, api_key, model, api_url, temperature=0.85, attempts=5):
+    """Call DeepSeek chat completions API with robust retry logic.
+
+    DeepSeek V4 models intermittently return empty content (HTTP 200 with
+    content="") — a known issue acknowledged in their docs. We counter with
+    more retries, longer backoff, and accepting truncated-but-usable content.
+    """
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
     }
+    # Base payload — system message helps steer the model and reduces empty responses
+    messages = [
+        {"role": "system", "content": "You are a professional B2B trade copywriter. Follow the user's instructions precisely and output only the requested content in Markdown."},
+        {"role": "user", "content": prompt},
+    ]
     payload = {
         "model": model,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages,
         "temperature": temperature,
-        "max_tokens": 4096,
+        "max_tokens": 8192,
     }
+    # Delays: 5s, 10s, 20s, 40s (exponential, longer base than before)
+    retry_delays = [5, 10, 20, 40]
     last_error = None
     for attempt in range(1, attempts + 1):
         try:
+            # Slightly vary the prompt on retries to work around the empty-content bug
+            # (DeepSeek docs suggest "modifying the prompt to mitigate" the issue)
+            if attempt > 1:
+                payload["messages"] = [
+                    {"role": "system", "content": "You are a professional B2B trade copywriter. Follow the user's instructions precisely and output only the requested content in Markdown."},
+                    {"role": "user", "content": prompt + f"\n\n(Attempt {attempt} — please ensure a complete response.)"},
+                ]
+            else:
+                payload["messages"] = messages
+
             resp = requests.post(
                 f"{api_url.rstrip('/')}/chat/completions",
                 headers=headers,
                 json=payload,
-                timeout=(15, 120),
+                timeout=(15, 180),
             )
             if not resp.ok:
                 body = resp.text[:500]
@@ -67,16 +90,23 @@ def call_api(prompt, api_key, model, api_url, temperature=0.85, attempts=3):
             resp_data = resp.json()
             choice = resp_data["choices"][0]
             content = choice["message"]["content"]
+            finish_reason = choice.get("finish_reason", "unknown")
+            content_len = len(content) if isinstance(content, str) else 0
             if not isinstance(content, str) or not content.strip():
-                raise ValueError("API returned empty content")
-            if choice.get("finish_reason") == "length":
-                raise ValueError("Response truncated (max_tokens reached)")
+                raise ValueError(f"API returned empty content (finish_reason={finish_reason})")
+            # Accept truncated content if it's substantial (>800 words ≈ 2/3 of target)
+            if finish_reason == "length":
+                word_count = len(content.split())
+                if word_count >= 800:
+                    print(f"  Warning: response truncated at {word_count} words, but content is substantial — accepting.")
+                    return content
+                raise ValueError(f"Response truncated (max_tokens reached, {word_count} words)")
             return content
         except (requests.RequestException, KeyError, TypeError, ValueError, RuntimeError) as exc:
             last_error = exc
             if attempt == attempts:
                 break
-            delay = 2 ** (attempt - 1)
+            delay = retry_delays[min(attempt - 1, len(retry_delays) - 1)]
             print(f"API attempt {attempt}/{attempts} failed: {exc}; retrying in {delay}s")
             time.sleep(delay)
     raise RuntimeError(f"AI API failed after {attempts} attempts: {last_error}")
