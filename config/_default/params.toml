@@ -5,6 +5,7 @@ enableSearch = true
 enableCodeCopy = false
 mainSections = ["posts"]
 smartTOC = true
+hotlinkFeatureImage = true
 brandName = "<strong>Catholic Religious Gifts Guide</strong> - RosarySupply.com"
 copyright = "<a href='https://ctoco.com/'>CTOCO-Catholic Rosary</a>&nbsp;&nbsp;<a href='https://rosarysupply.com/'>rosarysupply.com</a>"
 description = "Practical guides for Catholic rosary beads, religious gifts, church supplies, and wholesale sourcing."
@@ -28,7 +29,6 @@ showTaxonomies = true
 showHero = true
 heroStyle = "background"
 showTableOfContents = true
-hotlinkFeatureImage = true
 
 [list]
 showSummary = true
