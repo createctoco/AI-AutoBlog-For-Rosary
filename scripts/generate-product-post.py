@@ -401,7 +401,7 @@ ARTICLE_STRUCTURES = [
             "Overview",
             "Materials and Craftsmanship",
             "Bulk Ordering Details",
-            "Closing Notes",
+            "Bottom Line",
         ],
     },
     {
@@ -421,7 +421,7 @@ ARTICLE_STRUCTURES = [
             "Construction and Materials",
             "Wholesale and OEM Terms",
             "Pre-Order Verification",
-            "Wrapping Up",
+            "The Takeaway",
         ],
     },
 ]
@@ -517,11 +517,21 @@ LINKS (important):
 - Do NOT mention Alibaba, alibaba.com, or any Alibaba store — this article directs buyers to mecrt.com only
 
 EDITORIAL RULES:
-- Professional, calm, informative English — like a trade magazine article
-- Avoid canned phrases: "in today's market", "stands out as", "game-changer", "perfect choice", "comprehensive guide", "in conclusion"
-- Vary sentence and paragraph length naturally — do not write uniform blocks of the same length
+- Write like a sourcing consultant talking to a peer, not like a textbook or AI assistant
+- Use contractions naturally (it's, you're, that's, don't, won't) — stiff formal English is a red flag
+- Mix paragraph lengths: some paragraphs just 2-3 sentences, others longer. Do NOT write uniform blocks of the same length.
+- Do not start consecutive paragraphs with the same word or grammatical pattern
+- Occasionally ask a question or use a conditional ("If you're sourcing for…", "Wondering whether…") to sound conversational
+- Professional, calm, informative English — like a trade magazine article written by a human
+- Avoid ALL of these canned/AI phrases: "in today's market", "stands out as", "game-changer", "perfect choice", "comprehensive guide", "in conclusion", "in summary", "to summarize", "to sum up", "overall", "ultimately", "in essence", "it's worth noting that", "it should be noted that", "as mentioned earlier", "as discussed", "bringing it all together", "tying it all together", "when all is said and done", "at the end of the day", "delves into", "navigating the", "in the realm of", "landscape of", "paradigm", "leverage", "robust", "seamless", "elevate", "delve", "showcase", "underpin", "testament to"
 - Do not fabricate customer reviews, sales data, or personal experience
 - Use "we" or "our" sparingly, only for capabilities mentioned in the source material
+
+CRITICAL — FINAL SECTION RULES:
+- The final section must NOT recap or repeat points from earlier sections. This is the #1 AI tell.
+- Instead, write it as a concise takeaway: what should the reader remember, or what practical action should they take next?
+- Keep it short — 2-3 sentences max. Do not write a second body section disguised as a conclusion.
+- Think "executive summary" not "essay conclusion" — sharp, forward-looking, action-oriented.
 - Include the product image at the top of the article body using this exact markdown:
 {image_md}
 
