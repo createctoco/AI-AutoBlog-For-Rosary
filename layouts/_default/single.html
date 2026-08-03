@@ -14,7 +14,7 @@
     {{ end }}
 
     {{/* Header */}}
-    <header id="single_header" class="mt-5 max-w-prose">
+    <header id="single_header" class="mt-5 max-w-4xl">
       {{ if .Params.showBreadcrumbs | default (site.Params.article.showBreadcrumbs | default false) }}
         {{ partial "breadcrumbs.html" . }}
       {{ end }}
@@ -43,9 +43,9 @@
         </div>
       </div>
 
-      <div class="min-w-0 min-h-0 max-w-fit">
+      <div class="flex-1 min-w-0">
         {{ partial "series/series.html" . }}
-        <div class="article-content max-w-prose mb-20">
+        <div class="article-content max-w-4xl mb-20">
           {{ .Content }}
           {{ if and .Params.faqVerified .Params.faqJson }}
             {{ $faq := transform.Unmarshal .Params.faqJson }}
@@ -90,7 +90,7 @@
     </section>
 
     {{/* Footer */}}
-    <footer class="pt-8 max-w-prose print:hidden">
+    <footer class="pt-8 max-w-4xl print:hidden">
       {{ partial "article-pagination.html" . }}
       {{ if .Params.showComments | default (site.Params.article.showComments | default false) }}
         {{ if templates.Exists "partials/comments.html" }}
