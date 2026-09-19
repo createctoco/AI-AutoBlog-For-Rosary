@@ -1,6 +1,8 @@
-name: Generate Product Recommendation
+name: Daily Product Recommendation
 
 on:
+  schedule:
+    - cron: '0 1 * * *'    # Once daily: UTC 1:00 = Beijing 9:00
   workflow_dispatch:
 
 permissions:
@@ -9,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: generate-product-recommendation-main
+  group: daily-product-recommendation-main
   cancel-in-progress: false
 
 jobs:
