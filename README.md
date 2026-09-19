@@ -1,13 +1,13 @@
-# AI-AutoBlog Hugo
+# AI Blog Hugo
 
-Automated English content pipeline for Catholic religious gifts, rosary beads, and B2B wholesale buyers. Generated content is validated before it can be committed or deployed.
+Manual English content pipeline for Catholic religious gifts, rosary beads, and B2B wholesale buyers. Generated content is validated before it can be committed or deployed.
 
 Website: https://rosarysupply.com/
 
 ## How It Works
 
 ```
-Keywords in config.yaml → DeepSeek API generates article → Hugo builds site → GitHub Pages deploys
+Manual trigger → DeepSeek API generates article → Hugo builds site → GitHub Pages deploys
 ```
 
 ## Quick Start (5 minutes)
@@ -35,28 +35,27 @@ Open `blog-config.yaml` in your repo and customize:
 - **alibaba_products**: Your approved product URLs
 - **business_facts**: Verified MOQ and product claims the AI is allowed to state
 - **keywords**: Add your long-tail keywords (50+ recommended)
-- **cron**: Change the schedule in `.github/workflows/auto-generate-post.yml`
 
-### 4. Enable GitHub Actions
+### 4. Run GitHub Actions Manually
 
-Go to **Actions → auto-generate-post → Enable workflow**
+Go to **Actions → Generate Blog Post → Run workflow** when you want to generate a new article. Scheduled auto-publishing is disabled.
 
 ### 5. Enable GitHub Pages
 
 Go to **Settings → Pages → Source: Deploy from a branch → gh-pages / (root)**
 
-### 6. Test
+### 6. Verify the Manual Publish
 
-Go to **Actions → auto-generate-post → Run workflow** to manually trigger your first article.
+The workflow generates, validates, commits, and deploys the article only when manually triggered.
 
 Wait 2-5 minutes, then check your site at `https://yourusername.github.io/AI-AutoBlog-Hugo/`
 
 ## Features
 
-- **Fully automated**: Set once, articles generate on schedule forever
+- **Manual publishing**: Articles are generated only when the workflow is manually run
 - **B2B SEO optimized**: Prompts tuned for wholesale buyer intent
 - **Alibaba traffic引流**: Sidebar + article footer + inline links
-- **Auto images**: AI-generated featured images for each article
+- **Featured images**: AI-generated or stock images for each article
 - **SEO ready**: Hugo static site, fast loading, Google-friendly
 - **Review mode**: Optional PR-based review before publishing
 - **FAQ Schema**: Articles include FAQ sections for rich snippets
@@ -65,7 +64,7 @@ Wait 2-5 minutes, then check your site at `https://yourusername.github.io/AI-Aut
 
 ```
 ├── .github/workflows/
-│   └── auto-generate-post.yml    # GitHub Actions workflow
+│   └── auto-generate-post.yml    # Manual generation workflow
 ├── blog-config.yaml                # Keywords, links, and verified business facts
 ├── layouts/
 │   ├── partials/
@@ -90,21 +89,16 @@ Edit the prompt builders in `scripts/generate-post.py`.
 
 Update the Hugo configuration under `config/_default/` and pin the corresponding theme commit in the workflow.
 
-### Change Publish Frequency
+### Publish an Article
 
-Edit `cron` in `.github/workflows/auto-generate-post.yml`:
-- `0 1 * * *` — Every day at 09:00 Beijing time
-- `0 1 */2 * *` — Every two days at 09:00 Beijing time
-- `0 1 * * 1` — Every Monday at 09:00 Beijing time
-
-The production workflow runs only on its schedule or by manual dispatch. Merging code changes does not generate an extra article.
+Scheduled automatic publishing has been removed. To publish a new article, open **Actions → Generate Blog Post → Run workflow**. The workflow validates the generated content before committing and deploying it. Product recommendation posts can be generated through **Actions → Generate Product Recommendation → Run workflow**.
 
 ## Cost
 
 - **GitHub Pages**: Free
-- **GitHub Actions**: 2000 free minutes/month (plenty for daily posts)
+- **GitHub Actions**: Included with GitHub, with usage depending on how often you publish manually
 - **DeepSeek API**: ~$0.01-0.02 per article (1200 words)
-- **Total**: Under $1/month for daily articles
+- **Total**: Pay only for the articles you choose to generate manually
 
 ## Bind Custom Domain
 

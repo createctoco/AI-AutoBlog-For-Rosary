@@ -1,8 +1,6 @@
-name: Auto Generate Blog Post
+name: Generate Blog Post
 
 on:
-  schedule:
-    - cron: '0 3 * * 1'    # Weekly: UTC 3:00 Monday = Beijing 11:00 Monday (staggered from product workflow)
   workflow_dispatch:
 
 permissions:
@@ -12,7 +10,7 @@ permissions:
 
 # Never let two generators race to publish different versions of main.
 concurrency:
-  group: auto-generate-post-main
+  group: generate-blog-post-main
   cancel-in-progress: false
 
 jobs:
