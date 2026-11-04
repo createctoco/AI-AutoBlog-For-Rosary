@@ -78,7 +78,7 @@ class GeneratorSafetyTests(unittest.TestCase):
             generate_post.parse_and_validate_faq(raw, FACTS)
 
     def test_front_matter_quotes_are_yaml_safe(self):
-        _, content = generate_post.build_markdown(
+        filepath, content = generate_post.build_markdown(
             'A "quoted" title with \\ slash',
             'keyword "quoted"',
             "## One\n\nText\n\n## Two\n\nText\n\n## Three\n\nText",
@@ -86,6 +86,8 @@ class GeneratorSafetyTests(unittest.TestCase):
             None,
             "",
         )
+        self.assertNotRegex(filepath, r"\d{4}-\d{2}-\d{2}")
+        self.assertTrue(filepath.endswith(".md"))
         front = content.split("---", 2)[1]
         parsed = yaml.safe_load(front)
         self.assertEqual(parsed["title"], 'A "quoted" title with \\ slash')

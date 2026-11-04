@@ -8,7 +8,7 @@ Each day this script:
   3. Scrapes the product page (title, images, product intro, supplier info)
   4. Sends the material to DeepSeek to write a B2B buying-guide article
      that guides wholesale buyers toward sending an inquiry (not a retail purchase)
-  5. Saves the article as content/posts/YYYY-MM-DD-slug.md
+  5. Saves the article as content/posts/slug.md
      with category "Product Recommendations"
 """
 
@@ -645,13 +645,12 @@ def parse_and_validate_faq(raw):
 def build_markdown(title, product, article_md, faq_json):
     tz_bj = timezone(timedelta(hours=8))
     now = datetime.now(tz_bj)
-    date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H%M%S")
     slug = slugify(title)
-    filepath = f"{POSTS_DIR}/{date_str}-{slug}.md"
+    filepath = f"{POSTS_DIR}/{slug}.md"
 
     if os.path.exists(filepath):
-        filepath = f"{POSTS_DIR}/{date_str}-{time_str}-{slug}.md"
+        filepath = f"{POSTS_DIR}/{slug}-{time_str}.md"
 
     iso_date = now.strftime("%Y-%m-%dT%H:%M:%S+08:00")
 

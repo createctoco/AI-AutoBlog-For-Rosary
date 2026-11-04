@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Auto-generate a B2B SEO blog post using DeepSeek API.
-Saves output as content/posts/YYYY-MM-DD-slug.md
+Saves output as content/posts/slug.md
 Supports multiple posts per day with unique filenames.
 Features:
   - Pexels API for featured images (with local images/ fallback)
@@ -573,14 +573,13 @@ def build_markdown(title, keyword, article_md, alibaba, featured_image, faq_json
     # Use Beijing time (UTC+8) consistently
     tz_bj = timezone(timedelta(hours=8))
     now = datetime.now(tz_bj)
-    date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H%M%S")
     slug = slugify(title)
-    filepath = f"content/posts/{date_str}-{slug}.md"
+    filepath = f"content/posts/{slug}.md"
 
     # If file already exists, append time suffix to avoid collision
     if os.path.exists(filepath):
-        filepath = f"content/posts/{date_str}-{time_str}-{slug}.md"
+        filepath = f"content/posts/{slug}-{time_str}.md"
 
     store = alibaba["store"]
     products = alibaba["products"]
